@@ -20,7 +20,6 @@ public class LaunchActivity
         super.onCreate( savedInstanceState );
         SharedPreferences sharedPref =
                 getSharedPreferences( getString( R.string.preference_file_key ), Context.MODE_PRIVATE );
-
         if(sharedPref.contains(TOKEN_KEY)){
             Intent intentMain = new Intent(this, MainActivity.class);
             startActivity(intentMain);

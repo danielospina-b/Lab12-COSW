@@ -1,11 +1,21 @@
 package edu.eci.cosw.APIApp;
 
 import androidx.appcompat.app.AppCompatActivity;
+import edu.eci.cosw.APIApp.utils.APIClient;
+import edu.eci.cosw.APIApp.utils.LoginService;
+import edu.eci.cosw.APIApp.utils.LoginWrapper;
+import edu.eci.cosw.APIApp.utils.Token;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -15,15 +25,49 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
     }
 
-    /** Called when the user taps the Send button */
+    /** Called when the user taps the Login button */
     public void startMainActivity(View view) {
-        Intent intent = new Intent(this, MainActivity.class);
         EditText editTextEmail = findViewById(R.id.editTextEmail);
         EditText editTextPassword = findViewById(R.id.editTextPassword);
         boolean validFields = checkFields(editTextEmail, editTextPassword);
         if (validFields) {
-            startActivity(intent);
+            String email = editTextEmail.getText().toString().trim();
+            String password = editTextPassword.getText().toString().trim();
+            LoginService apiService = APIClient.getRetrofitInstance().create(LoginService.class);
+            Call<Token> tokenCall = apiService.attemptLogin(new LoginWrapper(email, password));
+            tokenCall.enqueue(new Callback<Token>() {
+                @Override
+                public void onResponse(Call<Token> call, Response<Token> response) {
+                    if (response.isSuccessful()) {
+                        Token token = response.body();
+                        setAuthToken(token);
+                        loginSuccessfulStartIntent();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Login Failed...", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<Token> call, Throwable t) {
+                    //TODO Use actual logging
+                    System.out.println("Callback Error: " + t.getLocalizedMessage());
+                    Toast.makeText(getApplicationContext(), "Something went wrong in our end...", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
+    }
+
+    private void loginSuccessfulStartIntent() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+    }
+
+    private void setAuthToken(Token token) {
+        SharedPreferences sharedPref =
+                getSharedPreferences( getString( R.string.preference_file_key ), Context.MODE_PRIVATE );
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(LaunchActivity.TOKEN_KEY, token.getAccessToken());
+        editor.commit();
     }
 
     /**
