@@ -7,7 +7,7 @@ public class APIClient {
 
     private static Retrofit retrofit;
     // TODO Change to Heroku API
-    private static final String BASE_URL = "http://192.168.43.151:8080/";
+    private static final String BASE_URL = "http://task-planner-ospina.herokuapp.com/";
 
     public static Retrofit getRetrofitInstance() {
         if (retrofit == null) {

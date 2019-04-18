@@ -17,6 +17,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.IOException;
+
 public class LoginActivity extends AppCompatActivity {
 
     @Override
@@ -44,6 +46,12 @@ public class LoginActivity extends AppCompatActivity {
                         loginSuccessfulStartIntent();
                     } else {
                         Toast.makeText(getApplicationContext(), "Login Failed...", Toast.LENGTH_SHORT).show();
+                        try {
+                            //TODO Use actual logging x2
+                            System.out.println(response.errorBody().string());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
 

@@ -6,7 +6,7 @@ import retrofit2.http.POST;
 
 public interface LoginService {
 
-    @POST("auth")
+    @POST("user/login")
     Call<Token> attemptLogin(@Body LoginWrapper user);
 
 }

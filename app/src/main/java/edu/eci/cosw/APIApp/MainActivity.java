@@ -1,5 +1,8 @@
 package edu.eci.cosw.APIApp;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -75,8 +78,21 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_settings) {
             return true;
         }
+        else if (id == R.id.action_logout) {
+            handleLogout();
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void handleLogout() {
+        SharedPreferences sharedPref = getSharedPreferences( getString( R.string.preference_file_key ), Context.MODE_PRIVATE );
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.remove(LaunchActivity.TOKEN_KEY);
+        editor.commit();
+        Intent intent = new Intent(this, LaunchActivity.class);
+        startActivity(intent);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
