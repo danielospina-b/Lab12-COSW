@@ -93,6 +93,7 @@ public class MainActivity extends AppCompatActivity
         editor.commit();
         Intent intent = new Intent(this, LaunchActivity.class);
         startActivity(intent);
+        finish();
     }
 
     @SuppressWarnings("StatementWithEmptyBody")

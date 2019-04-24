@@ -18,8 +18,12 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool( 1 );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,34 +39,43 @@ public class LoginActivity extends AppCompatActivity {
         if (validFields) {
             String email = editTextEmail.getText().toString().trim();
             String password = editTextPassword.getText().toString().trim();
-            LoginService apiService = APIClient.getRetrofitInstance().create(LoginService.class);
-            Call<Token> tokenCall = apiService.attemptLogin(new LoginWrapper(email, password));
-            tokenCall.enqueue(new Callback<Token>() {
-                @Override
-                public void onResponse(Call<Token> call, Response<Token> response) {
-                    if (response.isSuccessful()) {
-                        Token token = response.body();
-                        setAuthToken(token);
-                        loginSuccessfulStartIntent();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Login Failed...", Toast.LENGTH_SHORT).show();
-                        try {
-                            //TODO Use actual logging x2
-                            System.out.println(response.errorBody().string());
-                        } catch (IOException e) {
-                            e.printStackTrace();
+            handleLogin(email, password);
+        }
+    }
+
+    private void handleLogin(final String email, final String password) {
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                LoginService apiService = APIClient.getRetrofitInstance().create(LoginService.class);
+                Call<Token> tokenCall = apiService.attemptLogin(new LoginWrapper(email, password));
+                tokenCall.enqueue(new Callback<Token>() {
+                    @Override
+                    public void onResponse(Call<Token> call, Response<Token> response) {
+                        if (response.isSuccessful()) {
+                            Token token = response.body();
+                            setAuthToken(token);
+                            loginSuccessfulStartIntent();
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Login Failed...", Toast.LENGTH_SHORT).show();
+                            try {
+                                //TODO Use actual logging x2
+                                System.out.println(response.errorBody().string());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
-                }
 
-                @Override
-                public void onFailure(Call<Token> call, Throwable t) {
-                    //TODO Use actual logging
-                    System.out.println("Callback Error: " + t.getLocalizedMessage());
-                    Toast.makeText(getApplicationContext(), "Something went wrong in our end...", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
+                    @Override
+                    public void onFailure(Call<Token> call, Throwable t) {
+                        //TODO Use actual logging
+                        System.out.println("Callback Error: " + t.getLocalizedMessage());
+                        Toast.makeText(getApplicationContext(), "Something went wrong in our end...", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
     }
 
     private void loginSuccessfulStartIntent() {
