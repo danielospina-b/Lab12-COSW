@@ -22,4 +22,8 @@
     <string name="preference_file_key">preferences</string>
     <string name="login_button">Login</string>
     <string name="action_logout">Logout</string>
+    <string name="login_failed_error">Login Failed...</string>
+    <string name="something_went_wrong">Something went wrong in our end...</string>
+    <string name="invalid_email">Invalid email</string>
+    <string name="password_empty_error">\"Password cannot be empty\"</string>
 </resources>

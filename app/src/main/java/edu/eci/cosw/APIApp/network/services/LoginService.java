@@ -1,5 +1,7 @@
-package edu.eci.cosw.APIApp.utils;
+package edu.eci.cosw.APIApp.network.services;
 
+import edu.eci.cosw.APIApp.network.model.LoginWrapper;
+import edu.eci.cosw.APIApp.network.model.Token;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.POST;

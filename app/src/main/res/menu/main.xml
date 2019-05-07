@@ -11,4 +11,12 @@
         android:orderInCategory="101"
         android:title="@string/action_logout"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_getTasks"
+        android:orderInCategory="102"
+        android:title="Get tasks" />
+    <item
+        android:id="@+id/action_testDatabase"
+        android:orderInCategory="103"
+        android:title="Test DataBase" />
 </menu>

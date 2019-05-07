@@ -1,4 +1,4 @@
-package edu.eci.cosw.APIApp.utils;
+package edu.eci.cosw.APIApp.network.model;
 
 public class LoginWrapper {
 

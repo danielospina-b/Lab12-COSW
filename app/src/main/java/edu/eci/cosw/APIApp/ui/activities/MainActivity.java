@@ -1,8 +1,6 @@
-package edu.eci.cosw.APIApp;
+package edu.eci.cosw.APIApp.ui.activities;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -20,6 +18,21 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
 import android.view.MenuItem;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.eci.cosw.APIApp.R;
+import edu.eci.cosw.APIApp.database.AppDatabase;
+import edu.eci.cosw.APIApp.database.model.Task;
+import edu.eci.cosw.APIApp.network.APIClient;
+import edu.eci.cosw.APIApp.network.model.TodoTask;
+import edu.eci.cosw.APIApp.network.services.TaskService;
+import edu.eci.cosw.APIApp.storage.Storage;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -82,15 +95,64 @@ public class MainActivity extends AppCompatActivity
             handleLogout();
             return true;
         }
+        else if (id == R.id.action_getTasks) {
+            printTasks();
+            return true;
+        }
+        else if (id == R.id.action_testDatabase) {
+            printTasksDatabase();
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }
 
+    private void printTasks() {
+        Storage storage = new Storage(this);
+        System.out.println(storage.getToken());
+        TaskService taskService = APIClient.getTaskService(storage.getToken());
+        Call<List<TodoTask>> call = taskService.getAllTasks();
+        call.enqueue(new Callback<List<TodoTask>>() {
+            @Override
+            public void onResponse(Call<List<TodoTask>> call, Response<List<TodoTask>> response) {
+                ArrayList<TodoTask> result = (ArrayList<TodoTask>) response.body();
+                for (TodoTask task : result) {
+                    System.out.println(task.toString());
+                    // Could be better, pero implicaria modificar la API //TODO ...
+                    saveTaskOnDatabase(new Task((int) (Math.random()*10000), task.getDescription(), task.getStatus(), task.getDueDate()));
+                }
+                try {
+                    if (!response.isSuccessful()) {
+                        System.out.println("Error: " + response.errorBody().string());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<TodoTask>> call, Throwable t) {
+                System.out.println("onFailure: " + t.getMessage());
+            }
+        });
+    }
+
+    private void saveTaskOnDatabase(Task task) {
+        AppDatabase adb = AppDatabase.getInMemoryDatabase(getApplicationContext());
+        adb.taskDao().insertTask(task);
+    }
+
+    private void printTasksDatabase() {
+        AppDatabase adb = AppDatabase.getInMemoryDatabase(getApplicationContext());
+        List<Task> tasks= adb.taskDao().loadAllTasks();
+        for (Task task : tasks) {
+            System.out.println(task.toString());
+        }
+    }
+
     private void handleLogout() {
-        SharedPreferences sharedPref = getSharedPreferences( getString( R.string.preference_file_key ), Context.MODE_PRIVATE );
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.remove(LaunchActivity.TOKEN_KEY);
-        editor.commit();
+        Storage storage = new Storage(this);
+        storage.clearToken();
         Intent intent = new Intent(this, LaunchActivity.class);
         startActivity(intent);
         finish();
