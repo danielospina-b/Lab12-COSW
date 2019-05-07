@@ -1,7 +1,6 @@
 package edu.eci.cosw.APIApp.network;
 
 import java.io.IOException;
-
 import edu.eci.cosw.APIApp.network.services.LoginService;
 import edu.eci.cosw.APIApp.network.services.TaskService;
 import okhttp3.Interceptor;
