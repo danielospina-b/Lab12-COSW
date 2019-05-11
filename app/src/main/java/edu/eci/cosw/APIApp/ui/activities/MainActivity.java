@@ -11,12 +11,14 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import edu.eci.cosw.APIApp.R;
 import edu.eci.cosw.APIApp.database.AppDatabase;
@@ -25,6 +27,7 @@ import edu.eci.cosw.APIApp.network.APIClient;
 import edu.eci.cosw.APIApp.network.model.TodoTask;
 import edu.eci.cosw.APIApp.network.services.TaskService;
 import edu.eci.cosw.APIApp.storage.Storage;
+import edu.eci.cosw.APIApp.ui.adapters.TasksAdapter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -33,16 +36,21 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private RecyclerView recyclerView;
+    private TasksAdapter tasksAdapter;
+    private RecyclerView.LayoutManager layoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        
+        recyclerView = findViewById(R.id.recyclerView);
+        configureRecyclerView();
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -51,14 +59,25 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        getTasksFromAPI();
+
+    }
+
+    private void configureRecyclerView() {
+        recyclerView.setHasFixedSize( true );
+        layoutManager = new LinearLayoutManager( this );
+        recyclerView.setLayoutManager(layoutManager);
+        tasksAdapter = new TasksAdapter();
+        recyclerView.setAdapter(tasksAdapter);
     }
 
     @Override
@@ -94,7 +113,7 @@ public class MainActivity extends AppCompatActivity
             return true;
         }
         else if (id == R.id.action_getTasks) {
-            printTasks();
+            getTasksFromAPI();
             return true;
         }
         else if (id == R.id.action_testDatabase) {
@@ -105,20 +124,25 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private void printTasks() {
+    private void getTasksFromAPI() {
         Storage storage = new Storage(this);
         System.out.println(storage.getToken());
         TaskService taskService = APIClient.getTaskService(storage.getToken());
         Call<List<TodoTask>> call = taskService.getAllTasks();
+        // Method enqueue is a asynchronous method, so is already running in other thread.
         call.enqueue(new Callback<List<TodoTask>>() {
             @Override
             public void onResponse(Call<List<TodoTask>> call, Response<List<TodoTask>> response) {
                 ArrayList<TodoTask> result = (ArrayList<TodoTask>) response.body();
+                LinkedList<Task> taskList = new LinkedList<>();
                 for (TodoTask task : result) {
                     System.out.println(task.toString());
-                    // Could be better, pero implicaria modificar la API //TODO ...
-                    saveTaskOnDatabase(new Task((int) (Math.random()*10000), task.getDescription(), task.getStatus(), task.getDueDate()));
+                    // Next could be better, of course, pero implicaria modificar la API, queda por hacer//TODO ...
+                    Task newTask = new Task((int) (Math.random()*10000000), task.getDescription(), task.getStatus(), task.getDueDate());
+                    taskList.add(newTask);
+                    saveTaskOnDatabase(newTask);
                 }
+                tasksAdapter.updateTasks(taskList);
                 try {
                     if (!response.isSuccessful()) {
                         System.out.println("Error: " + response.errorBody().string());
@@ -140,7 +164,11 @@ public class MainActivity extends AppCompatActivity
         adb.taskDao().insertTask(task);
     }
 
+    /**
+     * This method prints to SysOut the current tasks in the Database
+     */
     private void printTasksDatabase() {
+        System.out.println("Printing all Tasks in Database...");
         AppDatabase adb = AppDatabase.getInMemoryDatabase(getApplicationContext());
         List<Task> tasks= adb.taskDao().loadAllTasks();
         for (Task task : tasks) {

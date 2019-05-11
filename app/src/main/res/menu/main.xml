@@ -14,7 +14,7 @@
     <item
         android:id="@+id/action_getTasks"
         android:orderInCategory="102"
-        android:title="Get tasks" />
+        android:title="@string/update_tasks" />
     <item
         android:id="@+id/action_testDatabase"
         android:orderInCategory="103"

@@ -26,4 +26,5 @@
     <string name="something_went_wrong">Something went wrong in our end...</string>
     <string name="invalid_email">Invalid email</string>
     <string name="password_empty_error">\"Password cannot be empty\"</string>
+    <string name="update_tasks">Update Tasks</string>
 </resources>
